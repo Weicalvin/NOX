@@ -5,7 +5,7 @@ import type { Cue } from "./srt";
 import type { UiLang } from "./i18n";
 import type { PcmClip } from "./audio";
 
-export type EngineMode = "local" | "cloud" | "hybrid";
+export type EngineMode = "local";
 export type Panel = "none" | "playlist" | "models" | "translate" | "install" | "help";
 
 export type MediaItem = {
@@ -38,7 +38,6 @@ type PlayerState = {
   busy: string | null;
   progress: number;
   panel: Panel;
-  cloudAvailable: boolean;
   readyModels: string[];
   downloadProgress: Record<string, number>;
   pcmReady: Record<string, boolean>;
@@ -69,7 +68,6 @@ type PlayerActions = {
   setProgress: (v: number) => void;
   setPanel: (v: Panel) => void;
   togglePanel: (v: Panel) => void;
-  setCloudAvailable: (v: boolean) => void;
   markModelReady: (id: string) => void;
   setDownloadProgress: (id: string, n: number) => void;
   markPcm: (id: string, ready: boolean) => void;
@@ -90,7 +88,7 @@ export const usePlayer = create<PlayerState & PlayerActions>()(
       uiLang: "zh",
       sourceLang: "auto",
       targetLang: "zh",
-      engine: "hybrid",
+      engine: "local",
       sttModelId: "whisper-tiny",
       mtModelId: "mt-en-zh",
       subtitleSize: 28,
@@ -101,7 +99,6 @@ export const usePlayer = create<PlayerState & PlayerActions>()(
       busy: null,
       progress: 0,
       panel: "none",
-      cloudAvailable: false,
       readyModels: [],
       downloadProgress: {},
       pcmReady: {},
@@ -180,7 +177,6 @@ export const usePlayer = create<PlayerState & PlayerActions>()(
       setPanel: (panel) => set({ panel }),
       togglePanel: (panel) =>
         set((s) => ({ panel: s.panel === panel ? "none" : panel })),
-      setCloudAvailable: (cloudAvailable) => set({ cloudAvailable }),
       markModelReady: (id) =>
         set((s) => ({
           readyModels: s.readyModels.includes(id) ? s.readyModels : [...s.readyModels, id],

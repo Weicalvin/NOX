@@ -10,7 +10,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Tip, TooltipProvider } from "@/components/ui/tooltip";
-import { getAiStatus } from "@/lib/ai/cloud";
 import { detectCachedModels, listReadyModels } from "@/lib/ai/local-engine";
 import { liveTick, snapshotOpts, transcribeRange } from "@/lib/ai/pipeline";
 import { decodeToMono16k } from "@/lib/audio";
@@ -64,7 +63,6 @@ export function AppShell() {
   }, [uiLang]);
 
   useEffect(() => {
-    void getAiStatus().then((s) => usePlayer.getState().setCloudAvailable(s.available));
     void detectCachedModels().then(() => {
       for (const id of listReadyModels()) usePlayer.getState().markModelReady(id);
     });

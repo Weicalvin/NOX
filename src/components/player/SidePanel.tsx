@@ -1,6 +1,5 @@
 import {
   Check,
-  Cloud,
   Download,
   HardDrive,
   Smartphone,
@@ -18,7 +17,7 @@ import { snapshotOpts, transcribeFull } from "@/lib/ai/pipeline";
 import { formatBytes } from "@/lib/format";
 import { t, type CopyKey } from "@/lib/i18n";
 import { toSrt } from "@/lib/srt";
-import { pcmStore, usePlayer, type EngineMode, type MediaItem } from "@/lib/store";
+import { pcmStore, usePlayer, type MediaItem } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -158,7 +157,6 @@ function ModelsBody() {
   const setMt = usePlayer((s) => s.setMtModel);
   const markReady = usePlayer((s) => s.markModelReady);
   const setProgress = usePlayer((s) => s.setDownloadProgress);
-  const cloud = usePlayer((s) => s.cloudAvailable);
   const busy = usePlayer((s) => s.busy);
 
   const download = async (id: string) => {
@@ -179,23 +177,6 @@ function ModelsBody() {
   return (
     <div className="flex flex-col gap-5">
       <p className="text-sm leading-relaxed text-muted">{tt("modelHubLead")}</p>
-
-      <section className="rounded-lg bg-surface-2 p-3 shadow-[0_0_0_1px_rgb(255_255_255/0.06)]">
-        <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-subtle">
-          <Cloud className="size-3.5" />
-          {tt("cloud")}
-        </div>
-        <CloudRow
-          title={tt("grokStt")}
-          desc={tt("grokSttDesc")}
-          available={cloud}
-        />
-        <CloudRow
-          title={tt("grokMt")}
-          desc={tt("grokMtDesc")}
-          available={cloud}
-        />
-      </section>
 
       <section>
         <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-subtle">
@@ -247,34 +228,6 @@ function ModelsBody() {
           ))}
         </div>
       </section>
-    </div>
-  );
-}
-
-function CloudRow({
-  title,
-  desc,
-  available,
-}: {
-  title: string;
-  desc: string;
-  available: boolean;
-}) {
-  const tt = useT();
-  return (
-    <div className="flex items-start justify-between gap-3 py-2">
-      <div>
-        <p className="text-sm text-fg">{title}</p>
-        <p className="text-xs leading-relaxed text-muted">{desc}</p>
-      </div>
-      <span
-        className={cn(
-          "shrink-0 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider",
-          available ? "bg-ok/15 text-ok" : "bg-white/6 text-muted",
-        )}
-      >
-        {available ? tt("alwaysOn") : tt("cloudOff")}
-      </span>
     </div>
   );
 }
@@ -342,7 +295,6 @@ function TranslateBody() {
   const tt = useT();
   const sourceLang = usePlayer((s) => s.sourceLang);
   const targetLang = usePlayer((s) => s.targetLang);
-  const engine = usePlayer((s) => s.engine);
   const live = usePlayer((s) => s.live);
   const busy = usePlayer((s) => s.busy);
   const progress = usePlayer((s) => s.progress);
@@ -354,7 +306,6 @@ function TranslateBody() {
   const pcmReady = usePlayer((s) => s.pcmReady);
   const setSourceLang = usePlayer((s) => s.setSourceLang);
   const setTargetLang = usePlayer((s) => s.setTargetLang);
-  const setEngine = usePlayer((s) => s.setEngine);
   const setLive = usePlayer((s) => s.setLive);
   const setSubtitleSize = usePlayer((s) => s.setSubtitleSize);
   const setShowOriginal = usePlayer((s) => s.setShowOriginal);
@@ -362,7 +313,6 @@ function TranslateBody() {
   const setCues = usePlayer((s) => s.setCues);
   const readyModels = usePlayer((s) => s.readyModels);
   const sttModelId = usePlayer((s) => s.sttModelId);
-  const cloud = usePlayer((s) => s.cloudAvailable);
 
   const runFull = async () => {
     if (!currentId) return;
@@ -384,7 +334,7 @@ function TranslateBody() {
       toast.success(`${tt("fullDone")} · ${cuesOut.length} ${tt("cues")}`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : tt("failed");
-      toast.error(msg === "local-stt-missing" ? tt("localNeed") : msg === "cloud-unavailable" ? tt("cloudOff") : msg);
+      toast.error(msg === "local-stt-missing" ? tt("localNeed") : msg);
     } finally {
       usePlayer.getState().setBusy(null);
       usePlayer.getState().setProgress(0);
@@ -410,22 +360,11 @@ function TranslateBody() {
       <Field label={tt("targetLang")}>
         <LangSelect value={targetLang} onChange={setTargetLang} />
       </Field>
-      <Field label={tt("engine")}>
-        <select
-          value={engine}
-          onChange={(e) => setEngine(e.target.value as EngineMode)}
-          className="h-11 w-full rounded-md bg-surface-2 px-3 text-sm text-fg shadow-[0_0_0_1px_rgb(255_255_255/0.08)]"
-        >
-          <option value="hybrid">{tt("engineHybrid")}</option>
-          <option value="local">{tt("engineLocal")}</option>
-          <option value="cloud">{tt("engineCloud")}</option>
-        </select>
-      </Field>
-      {engine !== "cloud" && !readyModels.includes(sttModelId) ? (
+      <div className="rounded-md bg-accent/10 px-3 py-2 text-sm text-accent">
+        {tt("engineLocal")}
+      </div>
+      {!readyModels.includes(sttModelId) ? (
         <p className="text-xs text-muted">{tt("localNeed")}</p>
-      ) : null}
-      {engine !== "local" && !cloud ? (
-        <p className="text-xs text-muted">{tt("cloudOff")}</p>
       ) : null}
 
       <div className="flex flex-col gap-2">

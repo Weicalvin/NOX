@@ -1,11 +1,9 @@
-import { encodeWav, blobToBase64, slicePcm, pcmDuration, type PcmClip } from "../audio";
-import { mergeCues, wordsToCues, type Cue } from "../srt";
+import { slicePcm, pcmDuration, type PcmClip } from "../audio";
+import { mergeCues, type Cue } from "../srt";
 import { findModel, findMtModel } from "./catalog";
-import { transcribeChunk, translateLines } from "./cloud";
 import { isModelReady, transcribeLocal, translateLocal } from "./local-engine";
 import { usePlayer, type EngineMode } from "../store";
 
-const CLOUD_CHUNK = 18;
 const LOCAL_CHUNK = 24;
 
 export type RunOpts = {
@@ -18,7 +16,6 @@ export type RunOpts = {
   mtModelId: string;
   sourceLang: string;
   targetLang: string;
-  cloudAvailable: boolean;
   whisperLang?: string;
 };
 
@@ -35,7 +32,7 @@ async function translateCues(cues: Cue[], opts: RunOpts): Promise<Cue[]> {
   );
   const mt = localMt?.task === "mt" ? localMt : pair;
   const canLocal =
-    opts.engine !== "cloud" && mt && isModelReady(mt.id) &&
+    mt && isModelReady(mt.id) &&
     (opts.sourceLang === "auto" || !mt.src || mt.src === opts.sourceLang) &&
     (!mt.tgt || mt.tgt === opts.targetLang);
 
@@ -45,44 +42,12 @@ async function translateCues(cues: Cue[], opts: RunOpts): Promise<Cue[]> {
       const translated = await translateLocal(mt, lines);
       return cues.map((c, i) => ({ ...c, translation: translated[i] ?? c.text }));
     } catch {
-      /* fall through */
+      return cues;
     }
   }
 
-  if (opts.engine === "local") return cues;
-  if (!opts.cloudAvailable) return cues;
-
-  const translated: string[] = [];
-  for (let i = 0; i < lines.length; i += 30) {
-    const batch = lines.slice(i, i + 30);
-    const res = await translateLines({
-      data: {
-        lines: batch,
-        sourceLang: opts.sourceLang,
-        targetLang: opts.targetLang,
-      },
-    });
-    if (!res.ok) throw new Error(res.error);
-    translated.push(...res.lines);
-  }
-  return cues.map((c, i) => ({ ...c, translation: translated[i] ?? c.text }));
-}
-
-async function transcribeCloud(clip: PcmClip, opts: RunOpts, offset: number): Promise<Cue[]> {
-  const wav = encodeWav(clip);
-  const wavBase64 = await blobToBase64(wav);
-  const res = await transcribeChunk({
-    data: {
-      wavBase64,
-      language: opts.sourceLang === "auto" ? undefined : opts.sourceLang,
-    },
-  });
-  if (!res.ok) throw new Error(res.error);
-  if (res.words.length > 0) return wordsToCues(res.words, offset);
-  const dur = pcmDuration(clip);
-  const text = res.text.trim();
-  if (!text) return [];
-  return [{ start: offset, end: offset + dur, text }];
+  // 純離線模式：沒有可用的本機翻譯模型時保留原文，不連線到任何雲端服務。
+  return cues;
 }
 
 export async function transcribeRange(opts: RunOpts): Promise<Cue[]> {
@@ -90,18 +55,12 @@ export async function transcribeRange(opts: RunOpts): Promise<Cue[]> {
   const end = opts.end ?? pcmDuration(opts.clip);
   const offset = opts.offset ?? start;
   const slice = slicePcm(opts.clip, start, end);
-  const useLocal =
-    opts.engine !== "cloud" && isModelReady(opts.sttModelId);
+  const useLocal = isModelReady(opts.sttModelId);
   if (useLocal) {
     const cues = await transcribeLocal(opts.sttModelId, slice, opts.whisperLang, offset);
     return translateCues(cues, opts);
   }
-  if (opts.engine === "local") {
-    throw new Error("local-stt-missing");
-  }
-  if (!opts.cloudAvailable) throw new Error("cloud-unavailable");
-  const cues = await transcribeCloud(slice, opts, offset);
-  return translateCues(cues, opts);
+  throw new Error("local-stt-missing");
 }
 
 export async function transcribeFull(
@@ -109,7 +68,7 @@ export async function transcribeFull(
   onProgress: (ratio: number, label: string) => void,
 ) {
   const total = pcmDuration(opts.clip);
-  const chunk = opts.engine === "cloud" || !isModelReady(opts.sttModelId) ? CLOUD_CHUNK : LOCAL_CHUNK;
+  const chunk = LOCAL_CHUNK;
   let cues: Cue[] = [];
   let t = 0;
   let i = 0;
@@ -142,7 +101,6 @@ export function snapshotOpts(): Omit<RunOpts, "clip"> {
     mtModelId: s.mtModelId,
     sourceLang: s.sourceLang,
     targetLang: s.targetLang,
-    cloudAvailable: s.cloudAvailable,
     whisperLang:
       s.sourceLang === "auto"
         ? undefined

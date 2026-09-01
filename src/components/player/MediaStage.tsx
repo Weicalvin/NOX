@@ -1,8 +1,6 @@
 import { Film, Music2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { t } from "@/lib/i18n";
-import { makeSampleClip } from "@/lib/ai/cloud";
 import { usePlayer } from "@/lib/store";
 import { Controls } from "./Controls";
 import { usePlayerContext } from "./player-context";
@@ -299,27 +297,6 @@ function EmptyState() {
           onClick={() => togglePanel("install")}
         >
           {t(uiLang, "install")}
-        </button>
-        <button
-          type="button"
-          className="inline-flex h-11 items-center rounded-md px-4 text-sm text-muted transition-[color,transform] duration-150 hover:text-fg active:scale-[0.96]"
-          onClick={async () => {
-            try {
-              const res = await makeSampleClip();
-              if (!res.ok) {
-                toast.error(res.error);
-                return;
-              }
-              const bin = atob(res.audio);
-              const bytes = new Uint8Array(bin.length);
-              for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-              addFiles([new File([bytes], "nox-sample.mp3", { type: res.mime })]);
-            } catch (err) {
-              toast.error(err instanceof Error ? err.message : t(uiLang, "failed"));
-            }
-          }}
-        >
-          {t(uiLang, "sample")}
         </button>
       </div>
     </div>
