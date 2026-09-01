@@ -17,11 +17,24 @@ async function getPipeline(task: "asr" | "translation", model: string) {
   const key = keyFor(task, model);
   const existing = pipelines.get(key);
   if (existing) return existing;
-  const instance = await pipeline(task === "asr" ? "automatic-speech-recognition" : "translation", model, {
-    dtype: "q8",
-    device: "wasm",
-    progress_callback: (progress: Progress) => self.postMessage({ type: "progress", task, model, ...progress }),
-  });
+  const progress_callback = (progress: Progress) => self.postMessage({ type: "progress", task, model, ...progress });
+  let instance;
+  try {
+    instance = await pipeline(task === "asr" ? "automatic-speech-recognition" : "translation", model, {
+      dtype: task === "asr" ? "q8" : "q8",
+      device: "wasm",
+      progress_callback,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (task !== "asr" || !/TransposeDQWeightsForMatMulNBits|Missing required scale|Can't create a session/i.test(message)) throw error;
+    self.postMessage({ type: "fallback", task, model, message: "量化權重不相容，改用相容模式重新載入" });
+    instance = await pipeline("automatic-speech-recognition", model, {
+      dtype: "fp32",
+      device: "wasm",
+      progress_callback,
+    });
+  }
   pipelines.set(key, instance);
   return instance;
 }
