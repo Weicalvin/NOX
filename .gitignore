@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build and preview output
+dist/
+preview-dist/
+.vercel/
+coverage/
+
+# Local Android tooling and generated APKs
+.android-sdk/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Grok/Manus workspace metadata
+.grok/
+.project_id
+
+# Local data and logs
+*.log
+*.pid
+.DS_Store
+Thumbs.db

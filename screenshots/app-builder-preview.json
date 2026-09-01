@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "NOX",
+      "hasCanvas": false,
+      "bodyTextLen": 146,
+      "bodyTextHash": "f75f910656e6fd9ec990c46338d7b037f88e9566d7cc43926c0e9c922337d783",
+      "bodyTextPrefix": "NOX 離線 AI 影音即時翻譯播放器 EN 把任何影片，變成你的語言 本地播放，字幕即時翻譯。模型下載後可離線轉錄，不經過伺服",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "NOX",
+      "hasCanvas": false,
+      "bodyTextLen": 123,
+      "bodyTextHash": "2f1cd11d412d3f672302cd719a618467a78d71519fc72bad79d152e700234fc8",
+      "bodyTextPrefix": "NOX EN 把任何影片，變成你的語言 本地播放，字幕即時翻譯。模型下載後可離線轉錄，不經過伺服器。 將影片或音訊拖到此處 或一",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
