@@ -26,8 +26,6 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build web bundle
         run: pnpm build
-      - name: Create Android project
-        run: pnpm exec cap add android
       - name: Copy web bundle
         run: pnpm exec cap copy android
       - name: Add Android media permissions
