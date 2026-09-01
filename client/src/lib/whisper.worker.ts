@@ -21,7 +21,7 @@ async function getPipeline(task: "asr" | "translation", model: string) {
   let instance;
   try {
     instance = await pipeline(task === "asr" ? "automatic-speech-recognition" : "translation", model, {
-      dtype: task === "asr" ? "q8" : "q8",
+      dtype: task === "asr" ? "fp32" : "q8",
       device: "wasm",
       progress_callback,
     });
