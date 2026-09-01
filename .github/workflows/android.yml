@@ -26,8 +26,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build web bundle
         run: pnpm build
-      - name: Copy web bundle
-        run: pnpm exec cap copy android
+      - name: Sync Capacitor Android project
+        run: pnpm exec cap sync android
       - name: Add Android media permissions
         run: node scripts/prepare-android-manifest.mjs
       - name: Assemble debug APK
